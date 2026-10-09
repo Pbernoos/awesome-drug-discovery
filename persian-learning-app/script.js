@@ -83,27 +83,47 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // 4. Handle Audio (Placeholder using browser TTS)
+    // 4. Handle Audio (Try Real Audio -> Fallback to TTS)
+    let currentAudio = null;
+
     playSoundBtn.addEventListener('click', () => {
         if (!currentLetterData) return;
 
-        // Ideally, in the future, your girlfriend will provide MP3 files.
-        // E.g. new Audio(`sounds/${currentLetterData.id}.mp3`).play();
-
-        // For now, we use a basic fallback TTS (may not sound perfectly Persian depending on OS)
-        const utterance = new SpeechSynthesisUtterance(currentLetterData.pronunciation || currentLetterData.letter);
-        utterance.lang = 'fa-IR'; // Try to use Persian voice if available
-        window.speechSynthesis.speak(utterance);
-
-        // Visual feedback
+        // Visual feedback for click
         playSoundBtn.style.transform = 'scale(0.9)';
         setTimeout(() => playSoundBtn.style.transform = '', 150);
+
+        // Stop any currently playing audio
+        if (currentAudio) {
+            currentAudio.pause();
+            currentAudio.currentTime = 0;
+        }
+        window.speechSynthesis.cancel();
+
+        // Try playing the real audio file first
+        const audioFile = `sounds/${currentLetterData.id}.mp3`;
+        currentAudio = new Audio(audioFile);
+
+        currentAudio.play().catch(error => {
+            console.log(`Real audio not found for ${currentLetterData.id}, falling back to TTS.`);
+
+            // Fallback to Browser Text-to-Speech
+            // Prioritize the actual Persian letter over the English transliteration for better TTS results
+            const textToSpeak = currentLetterData.letter.split('/')[0].trim();
+            const utterance = new SpeechSynthesisUtterance(textToSpeak);
+            utterance.lang = 'fa-IR'; // Try to use Persian voice if available
+            window.speechSynthesis.speak(utterance);
+        });
     });
 
     // 5. Close Modal Logic
     function closeModal() {
         modal.classList.add('hidden');
         window.speechSynthesis.cancel(); // Stop audio if playing
+        if (currentAudio) {
+            currentAudio.pause();
+            currentAudio.currentTime = 0;
+        }
     }
 
     closeBtn.addEventListener('click', closeModal);

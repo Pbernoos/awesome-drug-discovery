@@ -63,6 +63,10 @@ header p {
     transition: transform 0.2s, box-shadow 0.2s, background-color 0.2s;
     color: var(--primary-color);
     border: 2px solid transparent;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    white-space: nowrap;
 }
 
 .letter-card:hover {
